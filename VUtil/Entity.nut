@@ -22,6 +22,7 @@ function VUtil::Entity::Create(classname,keyvalues = {})
 function VUtil::Entity::SetKeyValue(entity,key,value)
 {
 	//modified from Alien Swarm SDK /src/game/server/spawn_helper.nut
+
 	switch ( typeof( value ) )
 	{
 		case "string":
@@ -47,6 +48,19 @@ function VUtil::Entity::SetKeyValue(entity,key,value)
 		default:
 			printl( "[VUtil.Entity.SetKeyValue] Cannot use " + typeof( value ) + " as a value! (" + key + ")" );
 	}
+}
+
+function VUtil::Entity::SetFriction(entity,friction){
+VUtil.Entity.SetKeyValue(entity,"inertiascale",friction);
+}
+
+//Take damage
+function VUtil::Entity::TakeDamage(entity,damage,type=VUtil.Constants.DamageTypes.GENERIC){
+VUtil.Entity.EnsureHasName(entity);
+VUtil.Entity.SetKeyValue(VUtil.point_hurt,"Damage",damage);
+VUtil.Entity.SetKeyValue(VUtil.point_hurt,"DamageType",type);
+VUtil.Entity.SetKeyValue(VUtil.point_hurt,"DamageTarget",entity.GetName());
+EntFireByHandle(VUtil.point_hurt,"Hurt","",0,null,null);
 }
 
 //Gives the entity a unique name if it doesn't already have a name.
@@ -88,6 +102,13 @@ function VUtil::Entity::GetAll()
 		entities.push(entity);
 	}
 	return entities;
+}
+
+//Get entity by index
+function VUtil::Entity::GetByIndex(entindex){
+	foreach(entity in VUtil.Entity.GetAll()){
+	if (entity.entindex()==entindex){return entity}
+	}
 }
 
 //Returns an array containing all of the entities with the given class name.

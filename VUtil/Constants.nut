@@ -51,3 +51,40 @@ VUtil.Constants.MoveTypes <-
 	Observer = 11	// Observer movement, depends on player's observer mode
 	Custom = 12		// Allows the entity to describe its own physics
 }
+
+//Weapon types enum used by item_equip event
+VUtil.Constants.WeaponTypes <- {
+	WEAPONTYPE_UNKNOWN = -1 //Who knows? Maybe it's nothing or wait what you hold chicken in hand?!!
+	WEAPONTYPE_KNIFE = 0
+	WEAPONTYPE_PISTOL = 1
+	WEAPONTYPE_SUBMACHINEGUN = 2 //SMG
+	WEAPONTYPE_RIFLE = 3
+	WEAPONTYPE_SHOTGUN = 4
+	WEAPONTYPE_SNIPER_RIFLE = 5
+	WEAPONTYPE_MACHINEGUN = 6
+	WEAPONTYPE_C4 = 7
+	WEAPONTYPE_GRENADE = 8
+}
+
+VUtil.Constants.DamageTypes <- {
+	GENERIC = 0 
+	CRUSH = 1 
+	BULLET = 2
+	SLASH = 4 
+	BURN = 8 
+	VEHICLE = 16 
+	FALL = 32 
+	BLAST	= 64 
+	CLUB = 128
+	SHOCK	 = 256
+	SONIC = 512
+	ENERGYBEAM = 1024
+	DROWN = 16384
+	PARALYSE = 32768
+	NERVEGAS = 65536
+	POISON = 131072
+	RADIATION = 262144
+	DROWNRECOVER = 524288
+	ACID = 1048576
+	SLOWBURN = 2097152
+}
