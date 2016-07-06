@@ -46,3 +46,32 @@ function VUtil::Debug::DrawCross(origin,size,xray = false,time = 0.15)
 	DebugDrawLine(origin - (Vector(0,1,0) * size), origin + (Vector(0,1,0) * size), 0, 255, 0, xray, time)
 	DebugDrawLine(origin - (Vector(0,0,1) * size), origin + (Vector(0,0,1) * size), 0, 0, 255, xray, time)
 }
+
+
+function VUtil::Debug::PrintTable(table,tablename="",spaces=0){
+local spaces_string=""
+for (local i=0;i<spaces;i++){
+	spaces_string+=" "
+}
+printl(spaces_string+(tablename!=""&&tablename+"  <-  "||"")+(typeof(table)=="table"&&"{"||"["))
+local nokey=false
+if (typeof(table)=="array"){
+nokey=true
+}
+spaces_string+="  "
+foreach(key,value in table){
+if (typeof(value)=="table"||typeof(value)=="array"){
+VUtil.Debug.PrintTable(value,(nokey&&""||key),spaces+4)
+} else if (typeof(value)=="string"){
+local double_quote=@""""
+printl(spaces_string+(nokey&&""||key.tostring()+"  <-  ")+double_quote+value.tostring()+double_quote+",")
+} else {
+printl(spaces_string+(nokey&&""||key.tostring()+"  <-  ")+value.tostring()+",")
+}
+}
+local spaces_string=""
+for (local i=0;i<spaces;i++){
+	spaces_string+=" "
+}
+printl(spaces_string+(typeof(table)=="table"&&"}"||"]")+(spaces!=0&&","||""))
+}

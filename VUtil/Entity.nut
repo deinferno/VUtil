@@ -55,12 +55,76 @@ VUtil.Entity.SetKeyValue(entity,"inertiascale",friction);
 }
 
 //Take damage
-function VUtil::Entity::TakeDamage(entity,damage,type=VUtil.Constants.DamageTypes.GENERIC){
+//Entity - our victim
+//Damage - damage that it take (Take armor points in accout)
+//Attacker - Who will attack that entity
+//Inflictor class - class of weapon that point_hurt disguise as (weapon_sawedoff,weapon_deagle)
+//Damage type - type of damage that will be applied on victim
+function VUtil::Entity::TakeDamage(entity,damage,attacker,inflictor="point_hurt",type=VUtil.Constants.DamageTypes.GENERIC){
+if (typeof(inflictor)=="instance"){
+	inflictor=inflictor.GetClassname()
+}
 VUtil.Entity.EnsureHasName(entity);
+VUtil.Entity.SetKeyValue(VUtil.point_hurt,"classname",inflictor);
 VUtil.Entity.SetKeyValue(VUtil.point_hurt,"Damage",damage);
 VUtil.Entity.SetKeyValue(VUtil.point_hurt,"DamageType",type);
 VUtil.Entity.SetKeyValue(VUtil.point_hurt,"DamageTarget",entity.GetName());
-EntFireByHandle(VUtil.point_hurt,"Hurt","",0,null,null);
+EntFireByHandle(VUtil.point_hurt,"Hurt","",0,attacker,null);
+}
+
+//Don't work
+/*
+function VUtil::Entity::AddDamageFilter(attacker,ignoredEntities){
+	VUtil.Entity.EnsureHasName(attacker)
+	foreach (_,entity in ignoredEntities){
+	entity.ValidateScriptScope()
+	local scope=entity.GetScriptScope()
+	scope["damagefilter_"+attacker.GetName()]<-VUtil.Entity.Create("filter_activator_name",{filtername=attacker.GetName(),Negated=true})
+	VUtil.Entity.EnsureHasName(scope["damagefilter_"+attacker.GetName()])
+	VUtil.Entity.SetKeyValue(entity,"damagefilter",scope["damagefilter_"+attacker.GetName()])
+	EntFireByHandle(entity,"SetDamageFilter",scope["damagefilter_"+attacker.GetName()].GetName(),0.01,null,null)
+	}
+}
+
+function VUtil::Entity::RemoveDamageFilter(attacker,ignoredEntities){
+	VUtil.Entity.EnsureHasName(attacker)
+	foreach (_,entity in ignoredEntities){
+	entity.ValidateScriptScope()
+	local scope=entity.GetScriptScope()
+	delete scope["damagefilter_"+attacker.GetName()]
+	VUtil.Entity.SetKeyValue(entity,"damagefilter","")
+	EntFireByHandle(entity,"SetDamageFilter","",0.01,null,null)
+	}
+}
+*/
+
+function VUtil::Entity::Explosion(position,damage,radius,attacker=null,inflictor="env_explosion",sprite="sprites/zerogxplode.spr"){
+if (typeof(inflictor)=="instance"){
+	inflictor=inflictor.GetClassname();
+}
+if (typeof(position)=="instance"){
+	position=position.GetCenter();
+}
+VUtil.Entity.SetKeyValue(VUtil.env_explosion,"classname",inflictor);
+VUtil.Entity.SetKeyValue(VUtil.env_explosion,"iMagnitude",damage);
+VUtil.Entity.SetKeyValue(VUtil.env_explosion,"iRadiusOverride",radius);
+VUtil.Entity.SetKeyValue(VUtil.env_explosion,"fireballsprite",sprite)
+/*if (ignoredEntities!=null){
+if (typeof(ignoredEntities)=="instance"){
+	ignoredEntities={[0]=ignoredEntities}
+}
+VUtil.Entity.AddDamageFilter(attacker||VUtil.env_explosion,ignoredEntities)
+function RemoveTimer(attacker,ignoredEntities){
+VUtil.Entity.RemoveDamageFilter(attacker||VUtil.env_explosion,ignoredEntities)
+}
+VUtil.Timer.Simple(0.5,"RemoveTimer",this,[attacker,ignoredEntities])
+}
+*/
+
+VUtil.env_explosion.SetOwner(attacker);
+VUtil.env_explosion.SetOrigin(position);
+
+EntFireByHandle(VUtil.env_explosion,"Explode","",0.0,null,null);
 }
 
 //Gives the entity a unique name if it doesn't already have a name.

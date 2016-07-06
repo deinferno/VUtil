@@ -102,6 +102,87 @@ VUtil.Entity.SetKeyValue(player,"gravity",1/speedmul);
 }
 }
 
+//Not work properly DISABLED , use from hammer
+/*
+//Allow to shoot bullets from entity to entity
+//On wiki:  The visual effect will be identical to an actual weapon firing, but causes no damage.
+//In virtual reality: *Dying sounds*
+//That means that it deadly
+//end - can be used as entity or origin
+function VUtil::Player::ShootBullets(attacker,weapon,start,end,numshots=1,spread=0){
+if (typeof(weapon)=="instance"){
+	weapon=weapon.GetClassname()
+}
+
+local npc_bullseye=null
+if (typeof(end)=="Vector"){
+	npc_bullseye=VUtil.Entity.Create("npc_bullseye")
+	npc_bullseye.SetOrigin(end)
+	VUtil.Entity.EnsureHasName(npc_bullseye)
+	end=npc_bullseye
+}
+
+local env_gunfire=VUtil.Entity.Create("env_gunfire",{weaponname=weapon,minburstsize=numshots,maxburstsize=numshots,StartDisabled=true,minburstdelay=1,maxburstdelay=1,spread=spread,bias=1})
+EntFireByHandle(env_gunfire,"addoutput","target "+end.GetName(),0,null,null)
+env_gunfire.SetOrigin(start)
+env_gunfire.SetOwner(attacker)
+EntFireByHandle(env_gunfire,"Enable","",5,null,null)
+VUtil.Debug.DrawCross(end.GetOrigin(),5,false,10)
+VUtil.Debug.DrawCross(env_gunfire.GetOrigin(),10,false,10)
+//Pew pew
+}
+*/
+
+//Shake player view
+function VUtil::Player::Shake(player,frequency,amplitude,duration){
+VUtil.Entity.SetKeyValue(VUtil.env_shake,"frequency",frequency);
+VUtil.Entity.SetKeyValue(VUtil.env_shake,"amplitude",amplitude);
+VUtil.Entity.SetKeyValue(VUtil.env_shake,"duration",duration);
+VUtil.Entity.EnsureHasName(player)
+EntFireByHandle(VUtil.env_shake,"SetParent",player.GetName(),0.0,null,null);
+VUtil.env_shake.SetOrigin(player.GetCenter())
+EntFireByHandle(VUtil.env_shake,"StartShake","",0.01,null,null);
+EntFireByHandle(VUtil.env_shake,"ClearParent","",0.02,null,null);
+}
+
+
+//Punch player view
+function VUtil::Player::ViewPunch(player,angle){
+VUtil.Entity.SetKeyValue(VUtil.env_viewpunch,"punchangle",angle);
+VUtil.Entity.EnsureHasName(player)
+EntFireByHandle(VUtil.env_viewpunch,"SetParent",player.GetName(),0.0,null,null);
+VUtil.env_viewpunch.SetOrigin(player.GetOrigin())
+
+EntFireByHandle(VUtil.env_viewpunch,"ViewPunch","",0.01,null,null);
+EntFireByHandle(VUtil.env_viewpunch,"ClearParent","",0.02,null,null);
+}
+
+//Add score to player 
+function VUtil::Player::AddScore(player,amount){
+VUtil.Entity.SetKeyValue(VUtil.game_score,"points",amount)
+VUtil.Entity.SetKeyValue(VUtil.game_score,"spawnflags",1)
+
+EntFireByHandle(VUtil.game_score,"ApplyScore","",0.0,player,null);
+}
+
+VUtil.Player.RemoveScore<-function(player,amount){VUtil.Player.AddScore(player,-amount)}
+
+function VUtil::Player::AddTeamScore(amount,team){
+VUtil.Entity.SetKeyValue(VUtil.game_score,"points",amount)
+VUtil.Entity.SetKeyValue(VUtil.game_score,"spawnflags",3)
+local player=null
+foreach (k,v in VUtil.Player.GetAll()){
+if (v.GetTeam()==team){
+player=v
+}
+}
+
+EntFireByHandle(VUtil.game_score,"ApplyScore","",0.0,player,null);
+}
+
+VUtil.Player.RemoveTeamScore<-function(amount,team){VUtil.Player.RemoveScore(-amount,team)}
+
+
 //Add money to player (can't be negative)
 function VUtil::Player::AddMoney(player,amount,text=""){
 VUtil.Entity.SetKeyValue(VUtil.game_money,"Money",amount)
@@ -166,6 +247,25 @@ EntFireByHandle(VUtil.point_give_ammo,"GiveAmmo","",0.0,player,null);
 
 VUtil.Player.GiveAmmo <- VUtil.Player.RegenerateAmmo
 
+function VUtil::Player::SetHUDVisibility(player,visible){
+	if (visible==true){visible=1}
+	EntFireByHandle(player,"SetHUDVisibility",visible.tostring(),0.0,null,null)
+}
+
+function VUtil::Player::GetViewModel(player){
+	foreach (k,v in VUtil.Entity.GetAllByClassname("predicted_viewmodel")){
+	if (v.GetRootMoveParent()==player){return v}
+	}
+}
+
+function VUtil::Player::GetWorldModels(player){
+	local worldmodels=[]
+	foreach (k,v in VUtil.Entity.GetAllByClassname("weaponworldmodel")){
+	if (v.GetMoveParent()==player){worldmodels.push(v)}
+	}
+	return worldmodels
+}
+
 function VUtil::Player::GetActiveWeapon(player){
 	local active_weapon=VUtil.Player.GetActiveWeaponClass(player)
 	return VUtil.Player.GetWeaponByClass(player,active_weapon)
@@ -182,7 +282,7 @@ function VUtil::Player::GetActiveWeaponClass(player){
 	if (player.GetClassname() == "player"){
 	player.ValidateScriptScope();
 	local ss=player.GetScriptScope();
-	if ( "active_weapon" in ss){return player.GetScriptScope().active_weapon} else {return "unknown"};
+	if ( "vutil_active_weapon" in ss){return player.GetScriptScope().vutil_active_weapon} else {return "unknown"};
 	};
 }
 
@@ -190,7 +290,7 @@ function VUtil::Player::GetActiveWeaponSlot(player){
 	if(player.GetClassname() == "player"){
 	player.ValidateScriptScope();
 	local ss=player.GetScriptScope();
-	if ( "active_slot" in ss){return player.GetScriptScope().active_slot} else {return VUtil.Constants.WeaponTypes.WEAPONTYPE_UNKNOWN};
+	if ( "vutil_active_slot" in ss){return player.GetScriptScope().vutil_active_slot} else {return VUtil.Constants.WeaponTypes.WEAPONTYPE_UNKNOWN};
 	};
 }
 
@@ -211,7 +311,7 @@ function VUtil::Player::GetByUserID(userid){
 foreach(player in VUtil.Player.GetAll()){
 if (player.ValidateScriptScope()){
 local ss=player.GetScriptScope()
-if ("userid" in ss&&ss.userid==userid){return player}	
+if ("vutil_userid" in ss&&ss.vutil_userid==userid){return player}	
 }
 }	
 }
@@ -324,12 +424,32 @@ function VUtil::Player::GetUserID(player){
 if (player.GetClassname()=="player"){
 if (player.ValidateScriptScope()){
 local ss=player.GetScriptScope()
-if ("userid" in ss){return ss.userid} else {return -1}	
+if ("vutil_userid" in ss){return ss.vutil_userid} else {return -1}	
 }
 }
 }
 
+function VUtil::Player::GetEyeAngles(player){
+if (player.GetClassname()=="player"){
+if (player.ValidateScriptScope()){
+local ss=player.GetScriptScope()
+if ("vutil_eye_tracker" in ss){return ss.vutil_eye_tracker.GetAngles()} else {return Vector(0,0,0)}	
+}
+}	
+}
+
+
+function VUtil::Player::GetEyeDirection(player){
+if (player.GetClassname()=="player"){
+if (player.ValidateScriptScope()){
+local ss=player.GetScriptScope()
+if ("vutil_eye_tracker" in ss){return ss.vutil_eye_tracker.GetForwardVector()} else {return Vector(0,0,0)}	
+}
+}	
+}
+
 //Creates an 'Eye Tracker' entity which will mimic the player's view angles and position.
+//NOW : Automatically created per player not needed
 //GetAngles on the eye will return the player's view angles.
 //GetForwardVector on the eye will return the player's looking direction (useful for traces).
 //This is a work around for the lack of an EyeAngles function for players.
