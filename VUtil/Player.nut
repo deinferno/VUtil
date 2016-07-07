@@ -297,7 +297,7 @@ function VUtil::Player::GetActiveWeaponSlot(player){
 //Return all players including bots
 function VUtil::Player::GetAll(){
 local players=[]
-foreach(player in VUtil.Entity.GetAll()){
+foreach(player in VUtil.Entity.GetAllByClassname("*player")){
 if (player.GetClassname()=="player"){
 players.push(player);
 }
