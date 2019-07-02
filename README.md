@@ -3,4 +3,4 @@ VUtil
 
 Various scripting utilities for Counter Strike: Global Offensive
 
-Warning: This is a work in progress, everything is subject to change and some things may not work properly yet.
+ABANDONED: This stuff is really old, not optimized and really awfully coded. Consider using https://github.com/samisalreadytaken libs and examples instead.
